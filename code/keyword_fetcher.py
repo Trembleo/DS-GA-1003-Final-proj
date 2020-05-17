@@ -59,7 +59,7 @@ class KeywordFetcher():
 
         t = tqdm(list(keyword_list["keyword"])[1:])
         for kw in t:
-            t.set_description(desc="Fetching...")
+            t.set_description(desc="Fetching Region: {}".format(region))
             del(ptr)
             time.sleep(0.5)
             ptr = TrendReq(hl='en-US', tz=300, retries=3, backoff_factor=10) # tz: time-zone offset, 300 for EST
