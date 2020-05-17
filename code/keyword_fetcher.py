@@ -15,7 +15,7 @@ class KeywordFetcher():
         self.trigram_path = trigram_path
 
 
-    def generate_keyword_list(self, num_features: int, save_path=None)-> pd.Dataframe:
+    def generate_keyword_list(self, num_features: int, save_path=None)-> pd.DataFrame:
         """
         Output: 
             DataFrame of two columns ('keyword', 'count')
@@ -63,7 +63,7 @@ class KeywordFetcher():
             del(ptr)
             time.sleep(0.5)
             ptr = TrendReq(hl='en-US', tz=300, retries=3, backoff_factor=10) # tz: time-zone offset, 300 for EST
-            ptr.build_payload([kw], cat=0, timeframe='2020-01-21 2020-05-1', geo='', gprop='')
+            ptr.build_payload([kw], cat=0, timeframe="{} {}".format(start_date, end_date), geo='', gprop='')
             try:
                 result = pd.concat([result, ptr.interest_over_time().drop(columns='isPartial')], axis=1)
             except KeyError:
