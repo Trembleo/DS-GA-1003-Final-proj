@@ -56,16 +56,24 @@ class DataParser:
         return label_array
 
 
-    def process_samples_state(self, normalize=True):
+    def process_samples_state(self, normalize=True, include_population=True, add_yesterday=False):
         df = self.keywords.loc[(self.keywords['date'] >= self.sdate.isoformat()) & 
                                 (self.keywords['date'] <= self.edate.isoformat())]
+        if not include_population:
+            df = df.drop(['population'], axis=1, inplace=False)
         df_mtx = df.drop(['date', 'Unnamed: 0', 'state'], axis=1, inplace=False).to_numpy()
+
+        if add_yesterday:
+            df_yesterday = df_mtx[1:, :]
+            df_yesterday = np.vstack((np.zeros((1, df_mtx.shape[1])), df_mtx[1:, :]))
+            df_mtx = np.hstack((df_mtx, df_yesterday))
+
         if normalize:
             return df_mtx / np.max(df_mtx, axis=0)
         return df_mtx
 
 
-    def process_labels_state(self, delay=0, delaytag='positiveIncrease', normalize=False):
+    def process_labels_state(self, delay=0, delaytag='positiveIncrease', normalize=False, divide_population=False):
         y = []
         label = self.cases.fillna(0)
         for index, row in self.keywords.iterrows():
@@ -80,7 +88,10 @@ class DataParser:
             if label_row.empty:
                 y.append(0)
             else:
-                y.append(label_row['positiveIncrease'].values[0])
+                y_value = label_row['positiveIncrease'].values[0]
+                if  divide_population:
+                    y_value = y_value * 1e6 / row['population'] # number per million people
+                y.append(y_value)
 
         if normalize:
             return np.array(y) / np.max(y)
