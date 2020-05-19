@@ -50,6 +50,7 @@ class DataParser:
             for i in range(len(avg_array_rev)):
                 avg_array_rev[i] = np.mean(labels[i:i + avg_date])
             label_array = np.flipud(avg_array_rev)[delay+1:]
+        label_array = label_array / 328.2 # number per million people
         return label_array
 
 
