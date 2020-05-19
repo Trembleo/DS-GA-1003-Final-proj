@@ -19,7 +19,6 @@ class DataParser:
         """
         self.avg_date = avg_date
         self.concat_date = concat_date
-
         self.keywords = pd.read_csv(keywords_path)
         self.cases = pd.read_csv(cases_path)
         self.sdate = date.fromisoformat(start_date)
@@ -45,6 +44,7 @@ class DataParser:
             sample_matrix = scipy.stats.zscore(concat_mtx, axis=1)
         return sample_matrix
 
+
     def process_labels(self, tag=None):
         if tag is None:
             tag = 'positiveIncrease'
@@ -54,8 +54,18 @@ class DataParser:
             avg_array_rev[i] = np.mean(labels[i:i+self.avg_date])
         label_array = np.flipud(avg_array_rev)[self.delay_date+1:]
         return label_array
-    
-    def process_labels_state(self, delay=0, delaytag='positiveIncrease'):
+
+
+    def process_samples_state(self, normalize=True):
+        df = self.keywords.loc[(self.keywords['date'] >= self.sdate.isoformat()) & 
+                                (self.keywords['date'] <= self.edate.isoformat())]
+        df_mtx = df.drop(['date', 'Unnamed: 0', 'state'], axis=1, inplace=False).to_numpy()
+        if normalize:
+            return df_mtx / np.max(df_mtx, axis=0)
+        return df_mtx
+
+
+    def process_labels_state(self, delay=0, delaytag='positiveIncrease', normalize=False):
         y = []
         label = self.cases.fillna(0)
         for index, row in self.keywords.iterrows():
@@ -71,4 +81,7 @@ class DataParser:
                 y.append(0)
             else:
                 y.append(label_row['positiveIncrease'].values[0])
-        return y
+
+        if normalize:
+            return np.array(y) / np.max(y)
+        return np.array(y)
