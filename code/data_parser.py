@@ -10,49 +10,46 @@ from datetime import date, timedelta
 
 class DataParser:
 
-    def __init__(self, keywords_path: str, cases_path: str, start_date: str, end_date:str,
-                 avg_date=7, concat_date=7):
+    def __init__(self, keywords_path: str, cases_path: str, start_date: str, end_date:str):
         """
         Input:
             date format: 
                 "YYYY-MM-DD"
         """
-        self.avg_date = avg_date
-        self.concat_date = concat_date
         self.keywords = pd.read_csv(keywords_path)
         self.cases = pd.read_csv(cases_path)
         self.sdate = date.fromisoformat(start_date)
         self.edate = date.fromisoformat(end_date)
 
-
     # Average with date
-    def process_data_sample(self, label_array, process='mean'):
+    def process_data_sample(self, label_array, process=None, avg_date=0, concat_date=0):
         matrix = self.keywords.drop(['date'], axis=1,inplace=False).to_numpy()
-
-        if process == 'mean':
-            avg_mtx = np.zeros((matrix.shape[0]-self.avg_date, matrix.shape[1]))
+        if process is None:
+            sample_matrix = matrix[:len(label_array)] / 100
+        elif process == 'mean':
+            avg_mtx = np.zeros((len(label_array), matrix.shape[1]))
             for i in range(len(label_array)):
-                avg_mtx[i] = np.mean(matrix[i:i+self.avg_date],axis=0)
-            # Standardrize mean-matrix
-            # sample_matrix = scipy.stats.zscore(avg_mtx, axis=1)
-            # sample_matrix = avg_mtx
+                avg_mtx[i] = np.mean(matrix[i:i + avg_date],axis=0)
             sample_matrix = avg_mtx / 100
         elif process == 'concat':
-            concat_mtx =  np.zeros((matrix.shape[0]-self.concat_date,matrix.shape[1]*self.concat_date))
+            concat_mtx =  np.zeros((len(label_array), matrix.shape[1] * concat_date))
             for i in range(len(label_array)):
-                concat_mtx[i] = np.ndarray.flatten(df_matrix[i:i+self.concat_date])
-            sample_matrix = scipy.stats.zscore(concat_mtx, axis=1)
+                concat_mtx[i] = np.ndarray.flatten(matrix[i:i + concat_date])
+            sample_matrix = avg_mtx / 100
         return sample_matrix
 
 
-    def process_labels(self, tag=None):
+    def process_labels(self, delay=0, avg_date=None, tag=None):
         if tag is None:
             tag = 'positiveIncrease'
         labels = self.cases[tag]
-        avg_array_rev = np.zeros((labels.shape[0]-self.avg_date))
-        for i in range(len(avg_array_rev)):
-            avg_array_rev[i] = np.mean(labels[i:i+self.avg_date])
-        label_array = np.flipud(avg_array_rev)[self.delay_date+1:]
+        if avg_date is None:
+            label_array = np.flipud(labels)[delay+1:]
+        else:
+            avg_array_rev = np.zeros((labels.shape[0] - avg_date))
+            for i in range(len(avg_array_rev)):
+                avg_array_rev[i] = np.mean(labels[i:i + avg_date])
+            label_array = np.flipud(avg_array_rev)[delay+1:]
         return label_array
 
 
