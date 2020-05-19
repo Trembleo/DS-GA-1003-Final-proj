@@ -10,8 +10,8 @@ from datetime import date, timedelta
 
 class DataParser:
 
-    def __init__(self, keywords_path: str, cases_path: str, start_date: str,
-                 avg_date=7, concat_date=7, delay_date=7):
+    def __init__(self, keywords_path: str, cases_path: str, start_date: str, end_date:str,
+                 avg_date=7, concat_date=7):
         """
         Input:
             date format: 
@@ -19,17 +19,12 @@ class DataParser:
         """
         self.avg_date = avg_date
         self.concat_date = concat_date
-        self.delay_date = delay_date
 
-        ## generate date list
-        date1 = date(int(start_date[:4]), int(start_date[4:6]), int(start_date[6:8]))
-        # date2 = date(int(end_date[:4]), int(end_date[4:6]), int(end_date[6:8]))
-        # date_list = [str(date1 + timedelta(days=x)) for x in range((date2-date1).days + 1)]
         self.keywords = pd.read_csv(keywords_path)
-        # self.keywords = self.keywords.loc[~self.keywords["date"].isin(date_list)]
-        # date_list = [str(date1 + timedelta(days=x)) for x in range((date2-date1).days + 1 + delay_date)]
         self.cases = pd.read_csv(cases_path)
-        # self.cases = self.cases.loc[~self.cases["date"].isin(date_list)]
+        self.sdate = date.fromisoformat(start_date)
+        self.edate = date.fromisoformat(end_date)
+
 
     # Average with date
     def process_data_sample(self, label_array, process='mean'):
@@ -59,3 +54,21 @@ class DataParser:
             avg_array_rev[i] = np.mean(labels[i:i+self.avg_date])
         label_array = np.flipud(avg_array_rev)[self.delay_date+1:]
         return label_array
+    
+    def process_labels_state(self, delay=0, delaytag='positiveIncrease'):
+        y = []
+        label = self.cases.fillna(0)
+        for index, row in self.keywords.iterrows():
+            state = row['state']
+            iso_date = row['date']
+            if date.fromisoformat(iso_date) < self.sdate or date.fromisoformat(iso_date) > self.edate:
+                continue
+            adate = date.fromisoformat(iso_date) + timedelta(days=delay)
+            int_date = int(str(adate.year) + str(adate.month).zfill(2) + str(adate.day).zfill(2))
+            label_row = label.loc[(label['state']==state) & (label['date']==int_date)]
+            assert(len(label_row)==0 or len(label_row)==1)
+            if label_row.empty:
+                y.append(0)
+            else:
+                y.append(label_row['positiveIncrease'].values[0])
+        return y
