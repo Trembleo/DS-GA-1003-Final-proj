@@ -20,4 +20,8 @@
         contains the cases data of US and every state.
     - trends:
         The data fetched from Google Trends. 30 and 150 means the number of features.
-    
+
+Resources:
+ - Covid-19 Twitter dataset: https://github.com/thepanacealab/covid19_twitter 
+ - Google Trends: https://trends.google.com/trends/?geo=US
+ - Novel Coronavirus (COVID-19) Cases Data: https://data.humdata.org/dataset/novel-coronavirus-2019-ncov-cases
